@@ -1,7 +1,6 @@
 #include "lib/textutils.cpp"
-#include "lib/IDT.cpp"
 #include "lib/sysinfo.cpp"
-#include "lib/Keyboard.cpp"
+#include "lib/Console.cpp"
 
 #include "lib/headers/TextModeColorCodes.h"
 
@@ -10,6 +9,7 @@ extern const char Test[];
 
 void main(){
   PrintString("Welcome to CryptOS\n\r");
+  Console();
   return;
 }
 
@@ -24,12 +24,10 @@ extern "C" void _start(){
   PrintString(".");
   PrintString("\n\n\r");
 
-  systemTests();
-  systemInfo(Test);
+  //systemTests();
+  //systemInfo(Test);
 
   PrintString("\n\r");
-
-  MainKeyboardHandler = KeyboardHandler;
 
   main();
   return;

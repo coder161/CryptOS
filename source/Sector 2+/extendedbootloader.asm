@@ -42,9 +42,10 @@ StartProtectedMode:
 [extern _start]
 
 %include "source/Sector 2+/IDT.asm"
+%include "source/Sector 2+/sysutils.asm"
 
 Start64Bit:
-    call ActivateSSE 
+    call ActivateSSE
     call _start
     jmp $
 
