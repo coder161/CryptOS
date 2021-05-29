@@ -4,6 +4,8 @@ void systemTests(){
   PrintString("\n---------- SYSTEM TESTS START ----------");
   PrintString("\n\rHEX_TO_STR_TEST(1234ABCD): ");
   PrintString(HexToString(0x1234abcd));
+  PrintString("\n\rFLOAT_TO_STR_TEST(3.7): ");
+  PrintString(FloatToString(3.7, 1));
   PrintString("\n\rCOLOR_TEST: ");
   PrintString("RED ", BACKGROUND_RED | FOREGROUND_BLACK);
   PrintString("BLUE ", BACKGROUND_BLUE | FOREGROUND_BLACK);
