@@ -1,5 +1,5 @@
 #pragma once
-#include "Typedefs.cpp"
+#include "headers/Typedefs.h"
 #include "KBScanCodeSets/EN.cpp"
 
 struct IDT64{

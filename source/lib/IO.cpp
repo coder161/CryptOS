@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Typedefs.cpp"
+#include "headers/Typedefs.h"
 
 #define PIC1_COMMAND 0x20
 #define PIC1_DATA 0x21
