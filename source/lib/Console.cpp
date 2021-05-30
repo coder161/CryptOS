@@ -53,11 +53,13 @@ void ConsoleKeyboardHandler(uint_8 scanCode, uint_8 chr){
   else {
     switch (scanCode) {
     case 0x8E: //Backspace
-      SetCursorPosition(CurserPosition - 1);
-      PrintChar(' ');
-      SetCursorPosition(CurserPosition - 1);
-      cmdPos--;
-      *(cmdPtr + cmdPos) = '\0';
+      if (CurserPosition % VGA_WIDTH > 4){
+        SetCursorPosition(CurserPosition - 1);
+        PrintChar(' ');
+        SetCursorPosition(CurserPosition - 1);
+        cmdPos--;
+        *(cmdPtr + cmdPos) = '\0';
+      }
       break;
     case 0x2A: //Left Shift Pressed
       LeftShiftPressed = true;
