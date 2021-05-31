@@ -7,6 +7,15 @@
 
 #define INPUT_LENGTH 256
 
+bool ReturnPressed = false;
+bool LeftShiftPressed = false;
+bool RightShiftPressed = false;
+uint_8 LastScanCode;
+
+int cmdPos = 0;
+char command[INPUT_LENGTH];
+char* cmdPtr = command;
+
 
 namespace CMD{
   char poweroff[INPUT_LENGTH] = "poweroff";
@@ -14,6 +23,7 @@ namespace CMD{
   char systests[INPUT_LENGTH] = "systests";
   char clear[INPUT_LENGTH] = "clear";
   char help[INPUT_LENGTH] = "help";
+  char debug[INPUT_LENGTH] = "debug";
 }
 
 namespace ACTIONS{
@@ -24,18 +34,24 @@ namespace ACTIONS{
     PrintString("systests      Run systests\n\r");
     PrintString("sysinfo       show system info\n\r");
     PrintString("poweroff      poweroff the system\n\r");
+    PrintString("debug         xD\n\r");
+  }
+  void debug(){
+    ClearScreen(BACKGROUND_BLUE | FOREGROUND_WHITE);
+    charMemPosition = 0;
+    for (int y = 0; y < VGA_HEIGHT - BOTTOM_MARGIN; y++){
+      for (int x = 0; x < VGA_WIDTH; x++){
+        colored_char memChar = charMem[y + charMemPosition][x];
+        *(VGA_MEMORY + CursorPosition * 2) = memChar.chr;
+        *(VGA_MEMORY + CursorPosition * 2 + 1) = memChar.color;
+        SetCursorPosition(CursorPosition + 1);
+      }
+    }
+    while(!ReturnPressed){}
+    ReturnPressed = false;
+    return;
   }
 }
-
-
-bool ReturnPressed = false;
-bool LeftShiftPressed = false;
-bool RightShiftPressed = false;
-uint_8 LastScanCode;
-
-int cmdPos = 0;
-char command[INPUT_LENGTH];
-char* cmdPtr = command;
 
 void ConsoleKeyboardHandler(uint_8 scanCode, uint_8 chr){
   if(chr != 0){
@@ -53,10 +69,10 @@ void ConsoleKeyboardHandler(uint_8 scanCode, uint_8 chr){
   else {
     switch (scanCode) {
     case 0x8E: //Backspace
-      if (CurserPosition % VGA_WIDTH > 4){
-        SetCursorPosition(CurserPosition - 1);
+      if (CoordFromPosition(CursorPosition).x > 4){
+        SetCursorPosition(CursorPosition - 1);
         PrintChar(' ');
-        SetCursorPosition(CurserPosition - 1);
+        SetCursorPosition(CursorPosition - 1);
         cmdPos--;
         *(cmdPtr + cmdPos) = '\0';
       }
@@ -126,6 +142,9 @@ void CommandHandler(){
   }
   else if (compare(command, CMD::help)){
     ACTIONS::help();
+  }
+  else if (compare(command, CMD::debug)){
+    ACTIONS::debug();
   }
   else{
     PrintString("Command not found!");

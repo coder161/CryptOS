@@ -7,10 +7,27 @@
 //definitions
 #define VGA_MEMORY (uint_8*)0xb8000
 #define VGA_WIDTH 80
+#define VGA_HEIGHT 25
+#define BOTTOM_MARGIN 2
+#define AUTO_SCROLL 1
+#define STD_COLOR BACKGROUND_BLACK | FOREGROUND_WHITE
 
-uint_16 CurserPosition;
+struct coords{
+  uint_8 x;
+  uint_8 y;
+};
 
-void ClearScreen(uint_64 ClearColor = BACKGROUND_BLACK | FOREGROUND_WHITE){
+struct colored_char{
+  char chr;
+  uint_8 color;
+};
+
+colored_char charMem[VGA_HEIGHT][VGA_WIDTH];
+
+uint_16 charMemPosition;
+uint_16 CursorPosition;
+
+void ClearScreen(uint_64 ClearColor = STD_COLOR){
   uint_64 value = 0;
   value += ClearColor << 8;
   value += ClearColor << 24;
@@ -26,38 +43,71 @@ void SetCursorPosition(uint_16 position){
   outb(0x3D5, (uint_8)(position & 0xFF));
   outb(0x3D4, 0x0E);
   outb(0x3D5, (uint_8)((position >> 8) & 0xFF));
-  CurserPosition = position;
+  CursorPosition = position;
 }
 
 uint_16 PositionFromCoords(uint_8 x, uint_8 y){
   return y * VGA_WIDTH + x;
 }
 
-void PrintChar(char chr, uint_8 color = BACKGROUND_BLACK | FOREGROUND_WHITE){
-  *(VGA_MEMORY + CurserPosition * 2) = chr;
-  *(VGA_MEMORY + CurserPosition * 2 + 1) = color;
-
-  SetCursorPosition(CurserPosition + 1);
+coords CoordFromPosition(uint_16 position){
+  coords crds;
+  crds.x = position % VGA_WIDTH;
+  crds.y = (int)(position / VGA_WIDTH);
+  return crds;
 }
 
-void PrintString(const char* str, uint_8 color = BACKGROUND_BLACK | FOREGROUND_WHITE){
-  uint_8* charPtr = (uint_8*)str;
-  uint_16 index = CurserPosition;
-  while(*charPtr != 0){
-    switch (*charPtr) {
-      case 10:
-        index += VGA_WIDTH;
-        SetCursorPosition(index);
-        break;
-      case 13:
-        index -= index % VGA_WIDTH;
-        SetCursorPosition(index);
-        break;
-      default:
-      PrintChar(*charPtr, color);
-      index++;
+void Scroll(int index){
+  charMemPosition += index;
+  ClearScreen();
+  SetCursorPosition(0);
+  for (int y = 0; y < VGA_HEIGHT - BOTTOM_MARGIN; y++){
+    for (int x = 0; x < VGA_WIDTH; x++){
+      colored_char memChar = charMem[y + charMemPosition][x];
+      if (memChar.chr != '\0'){
+        *(VGA_MEMORY + CursorPosition * 2) = memChar.chr;
+        *(VGA_MEMORY + CursorPosition * 2 + 1) = memChar.color;
+        SetCursorPosition(CursorPosition + 1);
+      }
     }
-    charPtr++;
+  }
+}
+
+void PrintChar(char chr, uint_8 color = STD_COLOR){
+
+  if (AUTO_SCROLL){
+    if (CoordFromPosition(CursorPosition).y + BOTTOM_MARGIN >= VGA_HEIGHT){
+      Scroll(1);
+    }
+  }
+
+  switch (chr) {
+    case 10:
+      SetCursorPosition(CursorPosition + VGA_WIDTH);
+
+      break;
+    case 13:
+      SetCursorPosition(CursorPosition-CoordFromPosition(CursorPosition).x);
+      break;
+    default:
+      *(VGA_MEMORY + CursorPosition * 2) = chr;
+      *(VGA_MEMORY + CursorPosition * 2 + 1) = color;
+
+      coords crds = CoordFromPosition(CursorPosition);
+      charMem[crds.y][crds.x].chr = chr;
+      charMem[crds.y][crds.x].color = color;
+
+      SetCursorPosition(CursorPosition + 1);
+      charMem[crds.y][crds.x].chr = '\0';
+    }
+}
+
+void PrintString(const char* str, uint_8 color = STD_COLOR){
+  uint_8* charPtr = (uint_8*)str;
+  uint_16 index = CursorPosition;
+  while(*charPtr != 0){
+      PrintChar(*charPtr, color);
+      charPtr++;
   }
 }
 
