@@ -40,3 +40,7 @@ void RemapPic(){
   outb(PIC1_DATA, a1);
   outb(PIC2_DATA, a2);
 }
+
+void io_wait(){
+    asm volatile ("outb %%al, $0x80" : : "a"(0));
+}

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MemoryMap.cpp"
+
 void systemTests(){
   PrintString("\n---------- SYSTEM TESTS START ----------");
   PrintString("\n\rHEX_TO_STR_TEST(1234ABCD): ");
@@ -23,6 +25,8 @@ void systemInfo(const char* version = "0.0.1"){
   PrintString(version);
   PrintString("\n\r    SCREEN_WIDTH: ");
   PrintString(IntegerToString(VGA_WIDTH));
+  PrintString("\n\r    MemoryRegionCount: ");
+  PrintString(IntegerToString(MemoryRegionCount));
   PrintString("\n\r    [*] Thanks to 'Poncho' on youtube.com <3");
   PrintString("\n\n\r");
 }

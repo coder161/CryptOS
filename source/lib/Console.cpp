@@ -24,6 +24,9 @@ namespace CMD{
   char clear[INPUT_LENGTH] = "clear";
   char help[INPUT_LENGTH] = "help";
   char debug[INPUT_LENGTH] = "debug";
+  char memmaps[INPUT_LENGTH] = "memmaps";
+  char scrolloff[INPUT_LENGTH] = "scrolloff";
+  char scrollon[INPUT_LENGTH] = "scrollon";
 }
 
 namespace ACTIONS{
@@ -35,6 +38,9 @@ namespace ACTIONS{
     PrintString("sysinfo       show system info\n\r");
     PrintString("poweroff      poweroff the system\n\r");
     PrintString("debug         xD\n\r");
+    PrintString("memmaps       Print Memory Maps\n\r");
+    PrintString("scrolloff     Disable AutoScroll\n\r");
+    PrintString("scrollon      Enable AutoScroll\n\r");
   }
   void debug(){
     ClearScreen(BACKGROUND_BLUE | FOREGROUND_WHITE);
@@ -50,6 +56,16 @@ namespace ACTIONS{
     while(!ReturnPressed){}
     ReturnPressed = false;
     return;
+  }
+
+  void memmaps(){
+    MemoryMapEntry** UsableMemoryMaps = GetUsableMemoryRegions();
+
+    for (uint_8 i = 0; i < UsableMemoryRegionCount; i++){
+      MemoryMapEntry* memMap = UsableMemoryMaps[i];
+      memMap += i;
+      PrintMemoryMap(memMap, CursorPosition);
+    }
   }
 }
 
@@ -145,6 +161,15 @@ void CommandHandler(){
   }
   else if (compare(command, CMD::debug)){
     ACTIONS::debug();
+  }
+  else if (compare(command, CMD::memmaps)){
+    ACTIONS::memmaps();
+  }
+  else if (compare(command, CMD::scrolloff)){
+    AUTO_SCROLL = 0;
+  }
+  else if (compare(command, CMD::scrollon)){
+    AUTO_SCROLL = 1;
   }
   else{
     PrintString("Command not found!");

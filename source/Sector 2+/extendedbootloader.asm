@@ -2,8 +2,10 @@ jmp EnterProtectedMode
 
 %include "source/Sector 2+/gdt.asm"
 %include "source/Sector 1/print.asm"
+%include "source/Sector 2+/DetectMemory.asm"
 
 EnterProtectedMode:
+    call DetectMemory
     call EnableA20
     cli
     lgdt [gdt_descriptor]

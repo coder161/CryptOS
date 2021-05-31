@@ -9,7 +9,6 @@
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 #define BOTTOM_MARGIN 2
-#define AUTO_SCROLL 1
 #define STD_COLOR BACKGROUND_BLACK | FOREGROUND_WHITE
 
 struct coords{
@@ -26,6 +25,8 @@ colored_char charMem[VGA_HEIGHT][VGA_WIDTH];
 
 uint_16 charMemPosition;
 uint_16 CursorPosition;
+
+uint_8 AUTO_SCROLL = 1;
 
 void ClearScreen(uint_64 ClearColor = STD_COLOR){
   uint_64 value = 0;
