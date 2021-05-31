@@ -6,6 +6,7 @@ INPUT
 (
     build/extendedbootloader.o
     build/kernel.o
+    build/Heap.o
     build/bins.o
 )
 
