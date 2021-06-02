@@ -3,6 +3,7 @@
 #include "lib/Console.cpp"
 
 #include "lib/headers/TextModeColorCodes.h"
+#include "lib/headers/Heap.h"
 
 extern const char Test[];
 
@@ -20,7 +21,7 @@ extern "C" void _start(){
   PrintString(".");
   InitializeIDT();
   PrintString(".");
-  //init anything
+  InitializeHeap(0x100000, 0x100000);
   PrintString(".");
   PrintString("\n\n\r");
 

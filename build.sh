@@ -13,6 +13,8 @@ echo "    [*] Compiling 'source/kernel.cpp'"
 compiler/bin/x86_64-elf-gcc -Ttext 0x8000 -ffreestanding -mno-red-zone -m64 -c "source/kernel.cpp" -o "build/kernel.o"
 echo "    [*] Compiling 'source/lib/Heap.cpp'"
 compiler/bin/x86_64-elf-gcc -Ttext 0x8000 -ffreestanding -mno-red-zone -m64 -c "source/lib/Heap.cpp" -o "build/Heap.o"
+echo "    [*] Compiling 'source/lib/Memory.cpp'"
+compiler/bin/x86_64-elf-gcc -Ttext 0x8000 -ffreestanding -mno-red-zone -m64 -c "source/lib/Memory.cpp" -o "build/Memory.o"
 
 
 echo "[ build.sh ] Do some other stuff"

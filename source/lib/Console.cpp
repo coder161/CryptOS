@@ -1,5 +1,6 @@
 #pragma once
 #include "headers/Typedefs.h"
+#include "headers/Heap.h"
 #include "textutils.cpp"
 #include "IDT.cpp"
 #include "sysutils.cpp"
@@ -43,19 +44,16 @@ namespace ACTIONS{
     PrintString("scrollon      Enable AutoScroll\n\r");
   }
   void debug(){
-    ClearScreen(BACKGROUND_BLUE | FOREGROUND_WHITE);
-    charMemPosition = 0;
-    for (int y = 0; y < VGA_HEIGHT - BOTTOM_MARGIN; y++){
-      for (int x = 0; x < VGA_WIDTH; x++){
-        colored_char memChar = charMem[y + charMemPosition][x];
-        *(VGA_MEMORY + CursorPosition * 2) = memChar.chr;
-        *(VGA_MEMORY + CursorPosition * 2 + 1) = memChar.color;
-        SetCursorPosition(CursorPosition + 1);
-      }
-    }
-    while(!ReturnPressed){}
-    ReturnPressed = false;
-    return;
+      uint_64* TestAddress = (uint_64*)aligned_alloc(0x4000, 0x08);
+      PrintString(HexToString((uint_64)TestAddress));
+      PrintString("\n\r");
+      free(TestAddress);
+
+      uint_64* TestAddress2 = (uint_64*)malloc(0x4000);
+      PrintString(HexToString((uint_64)TestAddress2));
+      PrintString("\n\r");
+
+      return;
   }
 
   void memmaps(){
