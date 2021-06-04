@@ -5,6 +5,7 @@
 #include "IDT.cpp"
 #include "sysutils.cpp"
 #include "sysinfo.cpp"
+#include "time.cpp"
 
 #define INPUT_LENGTH 256
 
@@ -13,21 +14,58 @@ bool LeftShiftPressed = false;
 bool RightShiftPressed = false;
 uint_8 LastScanCode;
 
+int oldsecond = 0;
+
 int cmdPos = 0;
 char command[INPUT_LENGTH];
 char* cmdPtr = command;
 
+char history[1024][INPUT_LENGTH];
+int historyPos = 0;
+int historyGetPos = 0;
 
-namespace CMD{
-  char poweroff[INPUT_LENGTH] = "poweroff";
-  char sysinfo[INPUT_LENGTH] = "sysinfo";
-  char systests[INPUT_LENGTH] = "systests";
-  char clear[INPUT_LENGTH] = "clear";
-  char help[INPUT_LENGTH] = "help";
-  char debug[INPUT_LENGTH] = "debug";
-  char memmaps[INPUT_LENGTH] = "memmaps";
-  char scrolloff[INPUT_LENGTH] = "scrolloff";
-  char scrollon[INPUT_LENGTH] = "scrollon";
+char info[VGA_WIDTH];
+char* infoPtr = info;
+int infoPos = 0;
+
+void ClearCMD(){
+  for (int i = 0; i < INPUT_LENGTH; i++){
+     cmdPtr[i] = '\0';
+   }
+   cmdPos = 0;
+   return;
+}
+
+void UpdateInfo(){
+    uint_16 oldPos = CursorPosition;
+    SetCursorPosition(PositionFromCoords(0, VGA_HEIGHT - 1));
+    AUTO_SCROLL = 0;
+    for (int i = 0; i < VGA_WIDTH; i++){
+        PrintChar(' ', BACKGROUND_BLUE | FOREGROUND_WHITE);
+    }
+    SetCursorPosition(CursorPosition - VGA_WIDTH);
+    for (int i = 0; i < VGA_WIDTH; i++){
+        PrintChar(*(infoPtr + i), BACKGROUND_BLUE | FOREGROUND_WHITE);
+    }
+    AUTO_SCROLL = 1;
+    SetCursorPosition(oldPos);
+}
+
+void SetInfo(int pos, char* text, int endpos=VGA_WIDTH){
+    for (int i = pos; i < endpos; i++){
+        *(infoPtr + i) = *text;
+        text++;
+    }
+}
+
+void update_time(){
+    read_rtc();
+    if ((int)second != oldsecond){
+        SetInfo(43, (char*)IntegerToString(hour), 45);
+        SetInfo(46, (char*)IntegerToString(minute), 48);
+        SetInfo(49, (char*)IntegerToString(second), 51);
+    }
+    oldsecond = second;
 }
 
 namespace ACTIONS{
@@ -40,18 +78,9 @@ namespace ACTIONS{
     PrintString("poweroff      poweroff the system\n\r");
     PrintString("debug         xD\n\r");
     PrintString("memmaps       Print Memory Maps\n\r");
-    PrintString("scrolloff     Disable AutoScroll\n\r");
-    PrintString("scrollon      Enable AutoScroll\n\r");
   }
   void debug(){
-      uint_64* TestAddress = (uint_64*)aligned_alloc(0x4000, 0x08);
-      PrintString(HexToString((uint_64)TestAddress));
-      PrintString("\n\r");
-      free(TestAddress);
-
-      uint_64* TestAddress2 = (uint_64*)malloc(0x4000);
-      PrintString(HexToString((uint_64)TestAddress2));
-      PrintString("\n\r");
+      update_time();
 
       return;
   }
@@ -65,6 +94,64 @@ namespace ACTIONS{
       PrintMemoryMap(memMap, CursorPosition);
     }
   }
+}
+
+namespace KEYS{
+    void Backspace(){
+        if (CoordFromPosition(CursorPosition).x > 4){
+          SetCursorPosition(CursorPosition - 1);
+          PrintChar(' ');
+          SetCursorPosition(CursorPosition - 1);
+          cmdPos--;
+          *(cmdPtr + cmdPos) = '\0';
+        }
+    }
+    void LeftShift(bool pressed=true){
+        LeftShiftPressed = pressed;
+    }
+    void RightShift(bool pressed=true){
+        RightShiftPressed = pressed;
+    }
+    void Return(){
+        PrintString("\n\r");
+        ReturnPressed = true;
+        char* ptr = command;
+        historyPos++;
+        historyGetPos = historyPos;
+        for (int i = 0; i < INPUT_LENGTH; i++){
+            history[historyPos][i] = *(ptr + i);
+        }
+        SetInfo(infoPos, (char*)IntegerToString(historyGetPos));
+        UpdateInfo();
+    }
+    void Up(){
+        while (!(CoordFromPosition(CursorPosition).x <= 4)){KEYS::Backspace();}
+        ClearCMD();
+        if (historyGetPos > 0){
+            historyGetPos--;
+            PrintString(history[historyGetPos]);
+            char* ptr = history[historyGetPos];
+            for (int i = 0; i < INPUT_LENGTH; i++){
+                command[i] = *(ptr + i);
+            }
+        }
+        SetInfo(infoPos, (char*)IntegerToString(historyGetPos));
+        UpdateInfo();
+    }
+    void Down(){
+        while (!(CoordFromPosition(CursorPosition).x <= 4)){KEYS::Backspace();}
+        ClearCMD();
+        if (historyGetPos < historyPos){
+            historyGetPos++;
+            PrintString(history[historyGetPos]);
+            char* ptr = history[historyGetPos];
+            for (int i = 0; i < INPUT_LENGTH; i++){
+                command[i] = *(ptr + i);
+            }
+        }
+        SetInfo(infoPos, (char*)IntegerToString(historyGetPos));
+        UpdateInfo();
+    }
 }
 
 void ConsoleKeyboardHandler(uint_8 scanCode, uint_8 chr){
@@ -83,41 +170,32 @@ void ConsoleKeyboardHandler(uint_8 scanCode, uint_8 chr){
   else {
     switch (scanCode) {
     case 0x8E: //Backspace
-      if (CoordFromPosition(CursorPosition).x > 4){
-        SetCursorPosition(CursorPosition - 1);
-        PrintChar(' ');
-        SetCursorPosition(CursorPosition - 1);
-        cmdPos--;
-        *(cmdPtr + cmdPos) = '\0';
-      }
+      KEYS::Backspace();
       break;
     case 0x2A: //Left Shift Pressed
-      LeftShiftPressed = true;
+      KEYS::LeftShift();
       break;
     case 0xAA: //Left Shift Released
-      LeftShiftPressed = false;
+      KEYS::LeftShift(false);
       break;
     case 0x36: //Right Shift Pressed
-      RightShiftPressed = true;
+      KEYS::RightShift();
       break;
     case 0xB6: //Right Shift Released
-      RightShiftPressed = false;
+      KEYS::RightShift(false);
       break;
     case 0x9C: //Enter
-      PrintString("\n\r");
-      ReturnPressed = true;
+      KEYS::Return();
+      break;
+    case 0x50: //Cursor Down
+      KEYS::Down();
+      break;
+    case 0x48: //Cursor Up
+      KEYS::Up();
       break;
     }
   }
   LastScanCode = scanCode;
-}
-
-void ClearCMD(){
-  for (int i = 0; i < INPUT_LENGTH; i++){
-     cmdPtr[i] = '\0';
-   }
-   cmdPos = 0;
-   return;
 }
 
 int compare(char a[],char b[]){
@@ -141,33 +219,27 @@ void CommandHandler(){
   PrintString("CryptOS: executing: ");
   PrintString(command);
   PrintString("\n\r");
-  if (compare(command, CMD::poweroff)){
+  if (compare(command,(char*)"poweroff")){
     sysutils::shutdown();
   }
-  else if (compare(command, CMD::sysinfo)){
+  else if (compare(command, (char*)"sysinfo")){
     systemInfo();
   }
-  else if (compare(command, CMD::systests)){
+  else if (compare(command, (char*)"systests")){
     systemTests();
   }
-  else if (compare(command, CMD::clear)){
+  else if (compare(command, (char*)"clear")){
     ClearScreen();
     SetCursorPosition(0);
   }
-  else if (compare(command, CMD::help)){
+  else if (compare(command, (char*)"help")){
     ACTIONS::help();
   }
-  else if (compare(command, CMD::debug)){
+  else if (compare(command, (char*)"debug")){
     ACTIONS::debug();
   }
-  else if (compare(command, CMD::memmaps)){
+  else if (compare(command, (char*)"memmaps")){
     ACTIONS::memmaps();
-  }
-  else if (compare(command, CMD::scrolloff)){
-    AUTO_SCROLL = 0;
-  }
-  else if (compare(command, CMD::scrollon)){
-    AUTO_SCROLL = 1;
   }
   else{
     PrintString("Command not found!");
@@ -177,8 +249,14 @@ void CommandHandler(){
 void Console(){
   MainKeyboardHandler = ConsoleKeyboardHandler;
   PrintString("CryptOS Console:");
+  SetInfo(0, (char*)"MODE: Console | SYS_VERSION: 0.0.1 | TIME: 00:00:00 | HISTORY: 0");
+  infoPos = 63;
+
   while (true) {
     PrintString("\n\r>>> ", BACKGROUND_BLACK | FOREGROUND_GREEN);
+
+    UpdateInfo();
+
     while (!ReturnPressed){}
     ReturnPressed = false;
     CommandHandler();

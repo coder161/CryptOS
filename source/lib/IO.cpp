@@ -23,6 +23,14 @@ unsigned char inb(unsigned short port){
   return returnVal;
 }
 
+void disable_ints(){
+    asm volatile("cli");
+}
+
+void enable_ints(){
+    asm volatile("sti");
+}
+
 void RemapPic(){
   uint_8 a1, a2;
   a1 = inb(PIC1_DATA);
