@@ -81,7 +81,6 @@ namespace ACTIONS{
   }
   void debug(){
       update_time();
-
       return;
   }
 

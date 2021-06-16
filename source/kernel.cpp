@@ -4,6 +4,7 @@
 
 #include "lib/headers/TextModeColorCodes.h"
 #include "lib/headers/Heap.h"
+//#include "lib/headers/task.h"
 
 extern const char Test[];
 
@@ -18,6 +19,7 @@ extern "C" void _start(){
   ClearScreen();
   SetCursorPosition(0);
   PrintString("[+] Starting Kernel");
+  //initTasking();
   PrintString(".");
   InitializeIDT();
   PrintString(".");
